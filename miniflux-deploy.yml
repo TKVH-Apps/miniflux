@@ -81,9 +81,9 @@ spec:
           readOnly: true
         resources:
           limits:
-            memory: 150Mi
+            memory: 75Mi
           requests:
-            memory: 100Mi
+            memory: 50Mi
       volumes:
       - name: miniflux-secrets
         csi:
