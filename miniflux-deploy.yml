@@ -1,0 +1,93 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: miniflux
+  labels:
+    app: miniflux
+    part-of: miniflux
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: miniflux
+      part-of: miniflux
+  template:
+    metadata:
+      labels:
+        app: miniflux
+        part-of: miniflux
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: disktype
+                operator: In
+                values:
+                - ssd 
+      serviceAccountName: miniflux
+      containers:
+      - name: miniflux
+        image: miniflux/miniflux:2.0.35
+        ports:
+        - name: miniflux
+          containerPort: 8080
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: miniflux
+              key: DATABASE_URL
+        - name: RUN_MIGRATIONS 
+          value: "1"
+        - name: CREATE_ADMIN
+          value: "1"
+        - name: ADMIN_USERNAME
+          value: "admin"
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: miniflux
+              key: ADMIN_PASSWORD
+        - name: OAUTH2_PROVIDER
+          value: "oidc"
+        - name: OAUTH2_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: miniflux
+              key: OAUTH2_CLIENT_ID
+        - name: OAUTH2_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: miniflux
+              key: OAUTH2_CLIENT_SECRET
+        - name: OAUTH2_REDIRECT_URL
+          valueFrom:
+            secretKeyRef:
+              name: miniflux
+              key: OAUTH2_REDIRECT_URL
+        - name: OAUTH2_OIDC_DISCOVERY_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: miniflux
+              key: OAUTH2_OIDC_DISCOVERY_ENDPOINT
+        - name: OAUTH2_USER_CREATION
+          value: "1"     
+        volumeMounts:
+        - name: miniflux-secrets
+          mountPath: "/mnt/vault"
+          readOnly: true
+        resources:
+          limits:
+            memory: 150Mi
+          requests:
+            memory: 100Mi
+      volumes:
+      - name: miniflux-secrets
+        csi:
+          driver: "secrets-store.csi.k8s.io"
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "miniflux"
