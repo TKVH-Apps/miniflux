@@ -25,7 +25,7 @@ spec:
       serviceAccountName: miniflux
       containers:
       - name: psql
-        image: postgres:latest
+        image: postgres:14.2-alpine
         ports:
         - name: psql
           containerPort: 5432
